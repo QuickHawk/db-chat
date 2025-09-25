@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from agent import DBAgent
 from analyzer import UIGenerator
@@ -6,6 +7,20 @@ from schema import UIConfiguration
 import uuid
 
 app = FastAPI()
+
+# CORS configuration
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # A simple in-memory store to hold agent instances for this PoC
 agents: dict[str, DBAgent] = {}
