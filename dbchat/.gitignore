@@ -1,0 +1,12 @@
+# Ignore Python virtual environment
+backend/.venv/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore frontend dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+.DS_Store

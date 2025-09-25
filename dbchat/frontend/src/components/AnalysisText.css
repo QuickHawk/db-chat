@@ -1,0 +1,37 @@
+.text-container {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 20px;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.text-container.highlighted {
+  border-color: #00aaff;
+  box-shadow: 0 0 15px rgba(0, 170, 255, 0.5);
+}
+
+.text-container.small {
+  width: 200px;
+}
+
+.text-container.medium {
+  width: 400px;
+}
+
+.text-container.large {
+  width: 600px;
+}
+
+.text-title {
+  font-size: 1.5em;
+  margin-bottom: 15px;
+  color: #eee;
+}
+
+.text-content {
+  font-size: 1em;
+  line-height: 1.6;
+  color: #ccc;
+}
