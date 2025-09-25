@@ -1,80 +1,65 @@
-from typing import List, Dict, Any
-from schema import UIConfiguration, KPICard, KPICardData, BarChart, BarChartData, AnalysisText, AnalysisTextData
+import os
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from .schema import UIConfiguration
+from dotenv import load_dotenv
 
-class UIGenerator:
-    def __init__(self, prompt: str, data: List[Dict[str, Any]]):
-        self.prompt = prompt.lower().strip()
-        self.data = data
+# Load environment variables
+load_dotenv()
 
-    def generate_ui(self) -> UIConfiguration:
+class UIAnalyzer:
+    def __init__(self):
         """
-        Analyzes the prompt and data to generate a UI configuration.
-        This is a rule-based system for the PoC.
+        Initializes the UI Analyzer with the LLM and a JSON output parser.
         """
-        elements = []
+        if not os.getenv("GOOGLE_API_KEY"):
+            raise ValueError("GOOGLE_API_KEY not found in environment variables.")
 
-        # Rule 1: Handle single-value results (e.g., SUM, COUNT)
-        if "how much" in self.prompt and len(self.data) == 1:
-            first_row = self.data[0]
-            # Assumes the first column is the value
-            value_key = list(first_row.keys())[0]
-            value = first_row[value_key]
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0)
+        self.parser = JsonOutputParser(pydantic_object=UIConfiguration)
 
-            kpi_card = KPICard(
-                data=KPICardData(
-                    title="Result",
-                    value=str(value),
-                    description=f"Based on your query: '{self.prompt}'"
-                ),
-                is_highlighted=True,
-                size="medium"
-            )
-            elements.append(kpi_card)
+    def _get_prompt_template(self) -> ChatPromptTemplate:
+        """
+        Creates the detailed prompt for the LLM to generate the UI configuration.
+        """
+        prompt = """
+        You are an expert data analyst and UI designer. Your task is to analyze raw data and a user's query to generate a dynamic and insightful user interface.
 
-        # Rule 2: Handle categorical analysis (e.g., GROUP BY)
-        elif "analyse" in self.prompt and len(self.data) > 0:
-            # Assumes first column is category, second is value
-            keys = list(self.data[0].keys())
-            category_key, value_key = keys[0], keys[1]
+        You must generate a JSON object that strictly follows this Pydantic schema:
+        {schema}
 
-            bar_chart = BarChart(
-                data=BarChartData(
-                    title="Expense Analysis",
-                    labels=[str(row[category_key]) for row in self.data],
-                    values=[float(row[value_key]) for row in self.data]
-                ),
-                size="large"
-            )
-            elements.append(bar_chart)
+        Here are the available UI components you can use:
+        - `kpi_card`: Ideal for displaying single, important numbers (e.g., totals, counts, averages).
+        - `bar_chart`: Perfect for comparing values across different categories.
+        - `analysis_text`: Use this for providing summaries, insights, or lists of data.
 
-            analysis_text = AnalysisText(
-                data=AnalysisTextData(
-                    title="Summary",
-                    text="This chart shows the breakdown of expenses by category for the current month."
-                )
-            )
-            elements.append(analysis_text)
+        Analyze the user's query and the resulting data to decide which UI components are most appropriate. Be creative and insightful. If the data is a single number, use a KPI card. If it's a comparison, a bar chart is best. If it's a list of items, use analysis text. You can combine multiple components to build a rich dashboard.
 
-        # Rule 3: Handle lists (e.g., top 5)
-        elif "top 5" in self.prompt and len(self.data) > 0:
-            # Creates a simple text block with the list
-            text_content = "Here are the top 5 items:\n"
-            for row in self.data:
-                item = row.get('item', 'N/A')
-                amount = row.get('amount', 'N/A')
-                text_content += f"- {item}: ${amount}\n"
+        User's Query:
+        {query}
 
-            analysis_text = AnalysisText(
-                data=AnalysisTextData(
-                    title="Top 5 Most Expensive Items",
-                    text=text_content
-                ),
-                size="large"
-            )
-            elements.append(analysis_text)
+        Raw Data (from SQL query):
+        {data}
 
-        # Default fallback
-        else:
-            elements.append(AnalysisText(data=AnalysisTextData(title="Query Result", text=str(self.data))))
+        Now, generate the UI configuration as a valid JSON object.
+        """
+        return ChatPromptTemplate.from_template(
+            prompt,
+            partial_variables={"schema": self.parser.get_format_instructions()}
+        )
 
-        return UIConfiguration(elements=elements)
+    def generate_ui_config(self, query: str, data: str) -> UIConfiguration:
+        """
+        Takes the user's query and raw data, and returns a UIConfiguration object.
+        """
+        prompt_template = self._get_prompt_template()
+        chain = prompt_template | self.llm | self.parser
+
+        try:
+            ui_config = chain.invoke({"query": query, "data": str(data)})
+            return ui_config
+        except Exception as e:
+            # In a real app, you might want to have a fallback or retry mechanism
+            print(f"Error generating UI config: {e}")
+            return None

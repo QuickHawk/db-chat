@@ -1,56 +1,41 @@
-import sqlite3
-from typing import List, Dict, Any
+import os
+from langchain_community.utilities import SQLDatabase
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.agents import create_sql_agent
+from dotenv import load_dotenv
 
-# A mock "LLM" that maps natural language questions to SQL queries.
-# In a real application, this would be a call to an actual LLM.
-QUERY_MAPPING = {
-    "how much is the story points for this sprint?": "SELECT SUM(story_points) FROM sprints;",
-    "analyse the expenses of this month?": "SELECT category, SUM(amount) FROM expenses WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now') GROUP BY category;",
-    "what are the top 5 most expensive items this month?": "SELECT item, amount FROM expenses WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now') ORDER BY amount DESC LIMIT 5;"
-}
+# Load environment variables from .env file
+load_dotenv()
 
-class DBAgent:
+class SQLAgent:
     def __init__(self, db_path: str):
         """
-        Initializes the agent with a path to the SQLite database.
+        Initializes the SQL Agent with a connection to the database and the LLM.
         """
-        self.db_path = db_path
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
-        # Use a dictionary cursor to get results as a list of dicts
-        self.conn.row_factory = sqlite3.Row
+        # Ensure the API key is loaded
+        if not os.getenv("GOOGLE_API_KEY"):
+            raise ValueError("GOOGLE_API_KEY not found in environment variables.")
 
-    def get_sql_from_prompt(self, prompt: str) -> str:
-        """
-        Simulates an LLM call to get an SQL query from a natural language prompt.
-        """
-        # Use a case-insensitive lookup
-        return QUERY_MAPPING.get(prompt.lower().strip(), "SELECT 'Invalid prompt. Please try one of the known questions.'")
+        self.db = SQLDatabase.from_uri(f"sqlite:///{db_path}")
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0)
 
-    def execute_sql(self, sql: str) -> List[Dict[str, Any]]:
+        # Create the SQL agent using LangChain's create_sql_agent
+        self.agent_executor = create_sql_agent(
+            llm=self.llm,
+            db=self.db,
+            agent_type="openai-tools", # This type is compatible with Gemini
+            verbose=True # Set to True for debugging
+        )
+
+    def query(self, prompt: str) -> dict:
         """
-        Executes the given SQL query and returns the results.
+        Takes a natural language prompt, generates and executes an SQL query,
+        and returns the result.
         """
         try:
-            cursor = self.conn.cursor()
-            cursor.execute(sql)
-            # Convert rows to a list of dictionaries
-            results = [dict(row) for row in cursor.fetchall()]
-            return results
-        except sqlite3.Error as e:
-            return [{"error": str(e)}]
-
-    def query(self, prompt: str) -> List[Dict[str, Any]]:
-        """
-        Takes a natural language prompt, converts it to SQL, executes it,
-        and returns the results.
-        """
-        sql_query = self.get_sql_from_prompt(prompt)
-        results = self.execute_sql(sql_query)
-        return results
-
-    def close(self):
-        """
-        Closes the database connection.
-        """
-        if self.conn:
-            self.conn.close()
+            # The agent executor returns a dictionary with an 'output' key
+            result = self.agent_executor.invoke({"input": prompt})
+            return {"result": result.get("output", "No result found.")}
+        except Exception as e:
+            # Handle potential errors from the agent or LLM
+            return {"error": str(e)}
