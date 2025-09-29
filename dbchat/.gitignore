@@ -1,5 +1,7 @@
 # Ignore Python virtual environment
 backend/.venv/
+backend/.env
+backend/sample_data.db
 
 # Ignore Python cache
 __pycache__/

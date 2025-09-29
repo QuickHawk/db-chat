@@ -1,7 +1,7 @@
 import os
 from langchain_community.utilities import SQLDatabase
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import create_sql_agent
+from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -17,7 +17,7 @@ class SQLAgent:
             raise ValueError("GOOGLE_API_KEY not found in environment variables.")
 
         self.db = SQLDatabase.from_uri(f"sqlite:///{db_path}")
-        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model=os.environ['GOOGLE_MODEL'], temperature=0)
 
         # Create the SQL agent using LangChain's create_sql_agent
         self.agent_executor = create_sql_agent(

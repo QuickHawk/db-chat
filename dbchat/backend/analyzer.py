@@ -2,7 +2,7 @@ import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from .schema import UIConfiguration
+from schema import UIConfiguration
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -16,7 +16,7 @@ class UIAnalyzer:
         if not os.getenv("GOOGLE_API_KEY"):
             raise ValueError("GOOGLE_API_KEY not found in environment variables.")
 
-        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model=os.environ['GOOGLE_MODEL'], temperature=0)
         self.parser = JsonOutputParser(pydantic_object=UIConfiguration)
 
     def _get_prompt_template(self) -> ChatPromptTemplate:
