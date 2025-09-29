@@ -5,6 +5,9 @@
   padding: 20px;
   color: #fff;
   transition: all 0.3s ease;
+  flex-grow: 1; /* Allow text block to grow */
+  flex-basis: 300px; /* Suggest a base width */
+  min-width: 250px; /* Prevent text block from becoming too small */
 }
 
 .text-container.highlighted {
@@ -12,17 +15,7 @@
   box-shadow: 0 0 15px rgba(0, 170, 255, 0.5);
 }
 
-.text-container.small {
-  width: 200px;
-}
-
-.text-container.medium {
-  width: 400px;
-}
-
-.text-container.large {
-  width: 600px;
-}
+/* Removed fixed-width classes like .small, .medium, .large */
 
 .text-title {
   font-size: 1.5em;

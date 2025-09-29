@@ -6,25 +6,18 @@
   text-align: center;
   color: #fff;
   transition: all 0.3s ease;
+  flex-grow: 1; /* Allow card to grow */
+  flex-basis: 250px; /* Suggest a base width */
+  min-width: 200px; /* Prevent card from becoming too small */
 }
 
 .kpi-card.highlighted {
   border-color: #00aaff;
   box-shadow: 0 0 15px rgba(0, 170, 255, 0.5);
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
-.kpi-card.small {
-  width: 150px;
-}
-
-.kpi-card.medium {
-  width: 250px;
-}
-
-.kpi-card.large {
-  width: 350px;
-}
+/* Removed fixed-width classes like .small, .medium, .large */
 
 .kpi-title {
   font-size: 1.2em;
