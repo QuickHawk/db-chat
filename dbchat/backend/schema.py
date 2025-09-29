@@ -37,9 +37,57 @@ class AnalysisText(BaseModel):
     is_highlighted: bool = False
     size: Literal["small", "medium", "large"] = "medium"
 
+# --- New Component Models ---
+
+class LineChartData(BaseModel):
+    title: str
+    x_axis_label: str
+    y_axis_label: str
+    lines: List[Dict[str, Any]] # e.g., [{'name': 'Sales', 'points': [{'x': 1, 'y': 10}]}]
+
+class LineChart(BaseModel):
+    type: Literal["line_chart"] = "line_chart"
+    data: LineChartData
+    is_highlighted: bool = False
+    size: Literal["small", "medium", "large"] = "large"
+
+class PieChartData(BaseModel):
+    title: str
+    segments: List[Dict[str, Any]] # e.g., [{'name': 'USA', 'value': 400}]
+
+class PieChart(BaseModel):
+    type: Literal["pie_chart"] = "pie_chart"
+    data: PieChartData
+    is_highlighted: bool = False
+    size: Literal["small", "medium", "large"] = "medium"
+
+class DataTableData(BaseModel):
+    title: str
+    headers: List[str]
+    rows: List[List[Any]]
+
+class DataTable(BaseModel):
+    type: Literal["data_table"] = "data_table"
+    data: DataTableData
+    is_highlighted: bool = False
+    size: Literal["small", "medium", "large"] = "large"
+
+class ScatterPlotData(BaseModel):
+    title: str
+    x_axis_label: str
+    y_axis_label: str
+    points: List[Dict[str, Any]] # e.g., [{'x': 10, 'y': 20}]
+
+class ScatterPlot(BaseModel):
+    type: Literal["scatter_plot"] = "scatter_plot"
+    data: ScatterPlotData
+    is_highlighted: bool = False
+    size: Literal["small", "medium", "large"] = "large"
+
+
 # A Union of all possible UI elements, with the discriminator applied via Annotated.
 UIElement = Annotated[
-    Union[KPICard, BarChart, AnalysisText],
+    Union[KPICard, BarChart, AnalysisText, LineChart, PieChart, DataTable, ScatterPlot],
     Field(discriminator="type")
 ]
 

@@ -16,7 +16,7 @@ class UIAnalyzer:
         if not os.getenv("GOOGLE_API_KEY"):
             raise ValueError("GOOGLE_API_KEY not found in environment variables.")
 
-        self.llm = ChatGoogleGenerativeAI(model=os.environ['GOOGLE_MODEL'], temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model=os.environ.get('GOOGLE_MODEL', 'gemini-1.5-pro'), temperature=0)
         self.parser = JsonOutputParser(pydantic_object=UIConfiguration)
 
     def _get_prompt_template(self) -> ChatPromptTemplate:
@@ -32,9 +32,13 @@ class UIAnalyzer:
         Here are the available UI components you can use:
         - `kpi_card`: Ideal for displaying single, important numbers (e.g., totals, counts, averages).
         - `bar_chart`: Perfect for comparing values across different categories.
-        - `analysis_text`: Use this for providing summaries, insights, or lists of data.
+        - `line_chart`: Use this to show trends over a continuous variable, like time.
+        - `pie_chart`: Excellent for displaying the proportions of a whole. Use when categories sum to 100%.
+        - `data_table`: Use this to display raw, tabular data when a chart isn't appropriate or when the user asks for the data itself.
+        - `scatter_plot`: Use this to visualize the relationship and correlation between two different numerical variables.
+        - `analysis_text`: Use this for providing summaries, insights, or lists of data that don't fit other formats.
 
-        Analyze the user's query and the resulting data to decide which UI components are most appropriate. Be creative and insightful. If the data is a single number, use a KPI card. If it's a comparison, a bar chart is best. If it's a list of items, use analysis text. You can combine multiple components to build a rich dashboard.
+        Analyze the user's query and the resulting data to decide which UI components are most appropriate. Be creative and insightful. You can combine multiple components to build a rich dashboard.
 
         User's Query:
         {query}

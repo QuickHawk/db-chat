@@ -1,0 +1,16 @@
+.chart-container {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 20px;
+  color: #fff;
+  transition: all 0.3s ease;
+  flex-grow: 1;
+  flex-basis: 400px;
+  min-width: 300px;
+}
+
+.chart-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
